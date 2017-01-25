@@ -7,6 +7,7 @@
 #include <asm/ptrace-abi.h>
 #include <asm/ldt.h>
 #include "auxiliary.h"
+#include <signal.h>
 
 #define TLS_MEM_SIZE 0x100
 
@@ -54,7 +55,11 @@ int main(int argc, char * argv[])
 					tsl_data = ptrace(PTRACE_PEEKDATA, child, tls_desc.base_addr-i, NULL);
 					fprintf(tls_file,"0x%08x:0x%08x\n",tls_desc.base_addr-i,tsl_data);
 				}
-				ptrace(PTRACE_CONT, child, NULL, NULL);
+				//ptrace(PTRACE_CONT, child, NULL, NULL);
+				if ((ret = kill(child,SIGKILL))!=-1){
+					DEBUG_INFO("kill thread successfully");
+					break;
+				}
 			}
 #elif  __i386__
 			if(regs.eip != pargs.main_eip) {
@@ -72,12 +77,16 @@ int main(int argc, char * argv[])
 					tsl_data = ptrace(PTRACE_PEEKDATA, child, tls_desc.base_addr-i, NULL);
 					fprintf(tls_file,"0x%08x:0x%08x\n",tls_desc.base_addr-i,tsl_data);
 				}
-				ptrace(PTRACE_CONT, child, NULL, NULL);
+				//ptrace(PTRACE_CONT, child, NULL, NULL);
+				if ((ret = kill(child,SIGKILL))!=-1){
+					DEBUG_INFO("kill thread successfully");
+					break;
+				}
 			}
 #endif
         //ptrace(PTRACE_DETACH, child, NULL, NULL);
 		}
+	    if ((ret=fclose(tls_file))==-1) DEBUG_ERR("close file error");
     }
-    if ((ret=fclose(tls_file))==-1) DEBUG_ERR("close file error");
     return 0;
 }
